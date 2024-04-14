@@ -291,18 +291,46 @@ void nsock_pool_delete(nsock_pool ms_pool) {
 
   free(nsp);
 }
-
+/*
 void nsock_library_initialize(void) {
 #ifndef WIN32
   rlim_t res;
 
   /* We want to make darn sure the evil SIGPIPE is ignored */
-  signal(SIGPIPE, SIG_IGN);
+  /*signal(SIGPIPE, SIG_IGN);
 
   /* And we're gonna need sockets -- LOTS of sockets ... */
-  res = maximize_fdlimit();
-  assert(res > 7);
+ /* res = maximize_fdlimit(); */
+/*  assert(res > 7); */
+/* #endif */
+/*  return; */
+/* } */
+void nsock_library_initialize(void) {
+#ifndef WIN32
+  rlim_t res;
+
+  /* We want to make sure the evil SIGPIPE is ignored */
+  signal(SIGPIPE, SIG_IGN);
+
+  /* Get the maximum number of file descriptors */
+  if (getrlimit(RLIMIT_NOFILE, &rl) == -1) {
+    /* Handle error getting the maximum number of file descriptors */
+    perror("getrlimit");
+    exit(EXIT_FAILURE);
+  }
+
+  /* Ensure the maximum number of file descriptors is greater than 7 */
+  if (rl.rlim_cur <= 7) {
+    /* Adjust the maximum number of file descriptors */
+    rl.rlim_cur = 8;
+    if (setrlimit(RLIMIT_NOFILE, &rl) == -1) {
+      /* Handle error setting the maximum number of file descriptors */
+      perror("setrlimit");
+      exit(EXIT_FAILURE);
+    }
+  }
 #endif
   return;
 }
+
 
